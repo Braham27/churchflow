@@ -66,6 +66,7 @@ model User {
   churchMemberships ChurchUser[]
   notifications   Notification[]
   activityLogs    ActivityLog[]
+  pushSubscriptions PushSubscription[]
 
   @@index([email])
 }
@@ -140,6 +141,7 @@ model Church {
   resources       Resource[]
   sermons         Sermon[]
   sermonSeries    SermonSeries[]
+  pushSubscriptions PushSubscription[]
 
   @@index([slug])
   @@index([subscriptionStatus])
@@ -914,6 +916,30 @@ enum MediaCategory {
   DOCUMENT
   AUDIO
   OTHER
+}
+
+// ==================== PUSH SUBSCRIPTIONS ====================
+
+model PushSubscription {
+  id          String   @id @default(cuid())
+  churchId    String
+  userId      String
+  
+  endpoint    String   @db.Text
+  p256dh      String
+  auth        String
+  
+  userAgent   String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  church      Church   @relation(fields: [churchId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([churchId])
+  @@index([userId])
 }
 
 // ==================== NOTIFICATIONS & LOGS ====================

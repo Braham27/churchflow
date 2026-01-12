@@ -139,11 +139,10 @@ export async function POST(request: NextRequest) {
         churchId,
         memberId: member?.id,
         title,
-        description,
+        content: description,
         isPrivate,
         isAnonymous,
         category,
-        status: "PENDING",
         prayerCount: 0,
       },
       include: {

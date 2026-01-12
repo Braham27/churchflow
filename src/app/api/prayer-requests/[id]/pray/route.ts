@@ -46,12 +46,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Increment prayer count and update status if first prayer
+    // Increment prayer count
     const updated = await prisma.prayerRequest.update({
       where: { id },
       data: {
         prayerCount: { increment: 1 },
-        status: existing.status === "PENDING" ? "PRAYING" : existing.status,
       },
     });
 
