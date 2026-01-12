@@ -38,7 +38,7 @@ async function getVolunteerStats(churchId: string) {
   ] = await Promise.all([
     prisma.volunteer.count({ where: { churchId } }),
     prisma.volunteer.count({
-      where: { churchId, status: "ACTIVE" },
+      where: { churchId, isActive: true },
     }),
     prisma.volunteerRole.count({ where: { churchId } }),
     prisma.volunteerShift.count({
@@ -57,16 +57,21 @@ async function getVolunteerStats(churchId: string) {
             firstName: true,
             lastName: true,
             email: true,
-            profileImage: true,
+            photo: true,
           },
         },
-        role: { select: { name: true, color: true } },
+        shifts: {
+          include: {
+            role: { select: { name: true } },
+          },
+          take: 1,
+        },
       },
     }),
     prisma.volunteerRole.findMany({
       where: { churchId },
       include: {
-        _count: { select: { volunteers: true } },
+        _count: { select: { shifts: true } },
       },
       orderBy: { name: "asc" },
     }),
@@ -266,7 +271,7 @@ export default async function VolunteersPage() {
                     className="flex items-center gap-4 py-3 first:pt-0 last:pb-0 hover:bg-muted/50 -mx-6 px-6 transition-colors"
                   >
                     <Avatar>
-                      <AvatarImage src={volunteer.member?.profileImage || ""} />
+                      <AvatarImage src={volunteer.member?.photo || ""} />
                       <AvatarFallback>
                         {getInitials(
                           volunteer.member?.firstName || "",
@@ -283,22 +288,13 @@ export default async function VolunteersPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      {volunteer.role && (
-                        <Badge
-                          style={{
-                            backgroundColor: volunteer.role.color
-                              ? `${volunteer.role.color}20`
-                              : undefined,
-                            color: volunteer.role.color || undefined,
-                            borderColor: volunteer.role.color || undefined,
-                          }}
-                          variant="outline"
-                        >
-                          {volunteer.role.name}
+                      {volunteer.shifts[0]?.role && (
+                        <Badge variant="outline">
+                          {volunteer.shifts[0].role.name}
                         </Badge>
                       )}
-                      <Badge className={statusColors[volunteer.status]}>
-                        {statusLabels[volunteer.status]}
+                      <Badge className={volunteer.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                        {volunteer.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                   </Link>
@@ -336,16 +332,15 @@ export default async function VolunteersPage() {
                     className="flex items-center gap-3 p-2 rounded-lg hover:bg-muted/50 -mx-2 transition-colors"
                   >
                     <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: role.color || "#64748b" }}
+                      className="w-3 h-3 rounded-full bg-primary"
                     />
                     <div className="flex-1">
                       <p className="font-medium">{role.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {role._count.volunteers} volunteers
+                        {role._count.shifts} shifts
                       </p>
                     </div>
-                    {role.isRequired && (
+                    {role.requiresBackgroundCheck && (
                       <Badge variant="secondary" className="text-xs">
                         Required
                       </Badge>
@@ -411,10 +406,10 @@ export default async function VolunteersPage() {
                         <CheckCircle className="mr-1 h-3 w-3" />
                         Confirmed
                       </Badge>
-                    ) : shift.status === "CANCELLED" ? (
+                    ) : shift.status === "DECLINED" ? (
                       <Badge className="bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300">
                         <XCircle className="mr-1 h-3 w-3" />
-                        Cancelled
+                        Declined
                       </Badge>
                     ) : (
                       <Badge variant="outline">

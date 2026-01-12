@@ -23,7 +23,7 @@ async function getWebsiteData(churchId: string) {
   const [pages, mediaCount, church] = await Promise.all([
     prisma.webPage.findMany({
       where: { churchId },
-      orderBy: [{ isHomepage: "desc" }, { title: "asc" }],
+      orderBy: [{ isHomePage: "desc" }, { title: "asc" }],
     }),
     prisma.mediaFile.count({
       where: { churchId },
@@ -35,7 +35,6 @@ async function getWebsiteData(churchId: string) {
         slug: true,
         website: true,
         logo: true,
-        primaryColor: true,
       },
     }),
   ]);
@@ -219,7 +218,7 @@ export default async function WebsitePage() {
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{page.title}</p>
-                        {page.isHomepage && (
+                        {page.isHomePage && (
                           <Badge variant="secondary" className="text-xs">
                             Home
                           </Badge>

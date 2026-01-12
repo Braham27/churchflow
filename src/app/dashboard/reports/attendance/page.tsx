@@ -302,7 +302,7 @@ export default async function AttendanceReportPage() {
                   className="flex items-center justify-between p-3 bg-muted rounded-lg"
                 >
                   <div>
-                    <p className="font-medium">{event.name}</p>
+                    <p className="font-medium">{event.title}</p>
                     <p className="text-sm text-muted-foreground">
                       {new Date(event.startDate).toLocaleDateString()}
                     </p>

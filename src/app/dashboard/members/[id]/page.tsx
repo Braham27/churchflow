@@ -37,29 +37,29 @@ async function getMember(id: string, churchId: string) {
           },
         },
       },
-      groups: {
+      groupMemberships: {
         include: {
           group: {
             select: { id: true, name: true, category: true },
           },
         },
       },
-      volunteer: {
+      volunteerProfile: {
         include: {
-          roles: {
+          shifts: {
             include: {
               role: {
-                select: { id: true, name: true, department: true },
+                select: { id: true, name: true, ministry: true },
               },
             },
           },
         },
       },
       donations: {
-        orderBy: { date: "desc" },
+        orderBy: { donatedAt: "desc" },
         take: 5,
         include: {
-          fund: { select: { name: true, color: true } },
+          fund: { select: { name: true } },
         },
       },
       attendances: {
@@ -153,8 +153,8 @@ export default async function MemberDetailPage({
                 <h1 className="text-2xl font-bold">
                   {member.firstName} {member.lastName}
                 </h1>
-                <Badge variant="outline" className={getStatusColor(member.status)}>
-                  {member.status}
+                <Badge variant="outline" className={getStatusColor(member.membershipStatus)}>
+                  {member.membershipStatus}
                 </Badge>
                 {member.givingBadge && (
                   <Badge
@@ -166,7 +166,7 @@ export default async function MemberDetailPage({
                 )}
               </div>
               <p className="text-muted-foreground">
-                {member.membershipType.replace("_", " ")}
+                Member since {member.membershipDate?.toLocaleDateString() || "N/A"}
               </p>
             </div>
           </div>
@@ -214,29 +214,29 @@ export default async function MemberDetailPage({
                       <p className="font-medium">
                         {member.address}
                         {member.city && `, ${member.city}`}
-                        {member.state && `, ${member.state}`} {member.zipCode}
+                        {member.state && `, ${member.state}`} {member.postalCode}
                       </p>
                     </div>
                   </div>
                 )}
-                {member.birthDate && (
+                {member.dateOfBirth && (
                   <div className="flex items-center gap-3">
                     <Calendar className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Birthday</p>
                       <p className="font-medium">
-                        {new Date(member.birthDate).toLocaleDateString()}
+                        {new Date(member.dateOfBirth).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
                 )}
-                {member.joinDate && (
+                {member.membershipDate && (
                   <div className="flex items-center gap-3">
                     <Clock className="h-5 w-5 text-muted-foreground" />
                     <div>
                       <p className="text-sm text-muted-foreground">Member Since</p>
                       <p className="font-medium">
-                        {new Date(member.joinDate).toLocaleDateString()}
+                        {new Date(member.membershipDate).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -257,9 +257,9 @@ export default async function MemberDetailPage({
               </Button>
             </CardHeader>
             <CardContent>
-              {member.groups.length > 0 ? (
+              {member.groupMemberships.length > 0 ? (
                 <div className="space-y-2">
-                  {member.groups.map((gm) => (
+                  {member.groupMemberships.map((gm) => (
                     <div
                       key={gm.group.id}
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
@@ -312,7 +312,7 @@ export default async function MemberDetailPage({
                           {donation.fund && ` • ${donation.fund.name}`}
                         </p>
                       </div>
-                      <Badge variant="outline">{donation.method}</Badge>
+                      <Badge variant="outline">{donation.paymentMethod}</Badge>
                     </div>
                   ))}
                 </div>
@@ -345,7 +345,7 @@ export default async function MemberDetailPage({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground">Groups</span>
-                <span className="font-semibold">{member.groups.length}</span>
+                <span className="font-semibold">{member.groupMemberships.length}</span>
               </div>
             </CardContent>
           </Card>
@@ -376,7 +376,7 @@ export default async function MemberDetailPage({
           )}
 
           {/* Volunteer Info */}
-          {member.volunteer && (
+          {member.volunteerProfile && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -388,19 +388,19 @@ export default async function MemberDetailPage({
                 <Badge
                   variant="outline"
                   className={
-                    member.volunteer.status === "ACTIVE"
+                    member.volunteerProfile.isActive
                       ? "bg-green-100 text-green-800"
                       : "bg-gray-100 text-gray-800"
                   }
                 >
-                  {member.volunteer.status}
+                  {member.volunteerProfile.isActive ? "ACTIVE" : "INACTIVE"}
                 </Badge>
-                {member.volunteer.roles.length > 0 && (
+                {member.volunteerProfile.shifts.length > 0 && (
                   <div className="mt-3 space-y-1">
-                    <p className="text-sm text-muted-foreground">Roles:</p>
-                    {member.volunteer.roles.map((vr) => (
-                      <Badge key={vr.role.id} variant="secondary" className="mr-1">
-                        {vr.role.name}
+                    <p className="text-sm text-muted-foreground">Assigned Roles:</p>
+                    {member.volunteerProfile.shifts.map((shift) => (
+                      <Badge key={shift.id} variant="secondary" className="mr-1">
+                        {shift.role.name}
                       </Badge>
                     ))}
                   </div>
@@ -419,9 +419,9 @@ export default async function MemberDetailPage({
                 <div className="space-y-2">
                   {member.attendances.map((att) => (
                     <div key={att.id} className="text-sm">
-                      <p className="font-medium">{att.event.title}</p>
+                      <p className="font-medium">{att.event?.title || "Event"}</p>
                       <p className="text-muted-foreground">
-                        {new Date(att.checkInTime).toLocaleDateString()}
+                        {att.checkInTime ? new Date(att.checkInTime).toLocaleDateString() : "-"}
                       </p>
                     </div>
                   ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,7 @@ const CHANNEL_OPTIONS = [
   { value: "PUSH", label: "Push Notification", icon: Send, description: "App notification" },
 ];
 
-export default function NewCommunicationPage() {
+function NewCommunicationForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -412,5 +412,17 @@ export default function NewCommunicationPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewCommunicationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <NewCommunicationForm />
+    </Suspense>
   );
 }

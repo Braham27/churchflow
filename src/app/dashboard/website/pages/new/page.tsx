@@ -115,7 +115,7 @@ export default function NewPageForm() {
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
-  const [isHomepage, setIsHomepage] = useState(false);
+  const [isHomePage, setIsHomePage] = useState(false);
   const [blocks, setBlocks] = useState<ContentBlock[]>([]);
   const [showBlockPicker, setShowBlockPicker] = useState(false);
 
@@ -230,7 +230,7 @@ export default function NewPageForm() {
           title,
           slug,
           metaDescription,
-          isHomepage,
+          isHomePage,
           isPublished: publish,
           content: JSON.stringify(blocks),
         }),
@@ -575,8 +575,8 @@ export default function NewPageForm() {
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
-                  checked={isHomepage}
-                  onChange={(e) => setIsHomepage(e.target.checked)}
+                  checked={isHomePage}
+                  onChange={(e) => setIsHomePage(e.target.checked)}
                   className="rounded border-gray-300"
                 />
                 <span className="text-sm">Set as Homepage</span>

@@ -17,16 +17,29 @@ import {
 } from "lucide-react";
 
 async function getGroups(churchId: string) {
-  return prisma.group.findMany({
+  const groups = await prisma.group.findMany({
     where: { churchId },
     include: {
       _count: { select: { members: true } },
-      leader: {
-        select: { firstName: true, lastName: true },
-      },
     },
     orderBy: { name: "asc" },
   });
+  
+  // Get leader info for each group
+  const groupsWithLeaders = await Promise.all(
+    groups.map(async (group) => {
+      let leader = null;
+      if (group.leaderId) {
+        leader = await prisma.member.findUnique({
+          where: { id: group.leaderId },
+          select: { firstName: true, lastName: true },
+        });
+      }
+      return { ...group, leader };
+    })
+  );
+  
+  return groupsWithLeaders;
 }
 
 async function getChurchData(userId: string) {
@@ -125,11 +138,11 @@ export default async function AllGroupsPage() {
                     <div>
                       <h3 className="font-semibold text-lg">{group.name}</h3>
                       <Badge variant="secondary" className="mt-1">
-                        {categoryLabels[group.category]}
+                        {categoryLabels[group.category] || group.category}
                       </Badge>
                     </div>
-                    <Badge className={statusColors[group.status]}>
-                      {group.status}
+                    <Badge className={group.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-800"}>
+                      {group.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
 
@@ -145,7 +158,7 @@ export default async function AllGroupsPage() {
                       <span>
                         {group._count.members} member
                         {group._count.members !== 1 ? "s" : ""}
-                        {group.maxMembers && ` / ${group.maxMembers} max`}
+                        {group.capacity && ` / ${group.capacity} max`}
                       </span>
                     </div>
                     {group.leader && (
@@ -173,18 +186,18 @@ export default async function AllGroupsPage() {
                     )}
                   </div>
 
-                  {group.maxMembers && (
+                  {group.capacity && (
                     <div className="mt-4">
                       <div className="flex justify-between text-xs mb-1">
                         <span>{group._count.members} members</span>
-                        <span>{group.maxMembers} max</span>
+                        <span>{group.capacity} max</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-1.5">
                         <div
                           className="bg-primary h-1.5 rounded-full transition-all"
                           style={{
                             width: `${Math.min(
-                              (group._count.members / group.maxMembers) * 100,
+                              (group._count.members / group.capacity) * 100,
                               100
                             )}%`,
                           }}

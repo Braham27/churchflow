@@ -20,7 +20,7 @@ import {
 import { notFound } from "next/navigation";
 
 async function getGroup(id: string, churchId: string) {
-  return prisma.group.findFirst({
+  const group = await prisma.group.findFirst({
     where: { id, churchId },
     include: {
       members: {
@@ -39,6 +39,23 @@ async function getGroup(id: string, churchId: string) {
       },
     },
   });
+  
+  // Get leader info if leaderId exists
+  let leader = null;
+  if (group?.leaderId) {
+    leader = await prisma.member.findUnique({
+      where: { id: group.leaderId },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        photo: true,
+      },
+    });
+  }
+  
+  return group ? { ...group, leader } : null;
 }
 
 async function getChurchData(userId: string) {
@@ -107,9 +124,9 @@ export default async function GroupDetailPage({
                 {categoryLabels[group.category]}
               </Badge>
               <Badge
-                variant={group.status === "ACTIVE" ? "default" : "secondary"}
+                variant={group.isActive ? "default" : "secondary"}
               >
-                {group.status}
+                {group.isActive ? "Active" : "Inactive"}
               </Badge>
             </div>
           </div>
@@ -218,7 +235,7 @@ export default async function GroupDetailPage({
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
                 Members ({group.members.length}
-                {group.maxMembers && ` / ${group.maxMembers}`})
+                {group.capacity && ` / ${group.capacity}`})
               </CardTitle>
               <Button size="sm">
                 <UserPlus className="h-4 w-4 mr-2" />
@@ -282,10 +299,10 @@ export default async function GroupDetailPage({
                 <span className="text-muted-foreground">Total Members</span>
                 <span className="font-bold">{group.members.length}</span>
               </div>
-              {group.maxMembers && (
+              {group.capacity && (
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Capacity</span>
-                  <span className="font-bold">{group.maxMembers}</span>
+                  <span className="font-bold">{group.capacity}</span>
                 </div>
               )}
               <div className="flex justify-between items-center">
@@ -298,7 +315,7 @@ export default async function GroupDetailPage({
           </Card>
 
           {/* Capacity Progress */}
-          {group.maxMembers && (
+          {group.capacity && (
             <Card>
               <CardHeader>
                 <CardTitle>Capacity</CardTitle>
@@ -307,21 +324,21 @@ export default async function GroupDetailPage({
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>{group.members.length} members</span>
-                    <span>{group.maxMembers} max</span>
+                    <span>{group.capacity} max</span>
                   </div>
                   <div className="w-full bg-muted rounded-full h-2">
                     <div
                       className="bg-primary h-2 rounded-full transition-all"
                       style={{
                         width: `${Math.min(
-                          (group.members.length / group.maxMembers) * 100,
+                          (group.members.length / group.capacity) * 100,
                           100
                         )}%`,
                       }}
                     />
                   </div>
                   <p className="text-sm text-muted-foreground text-center">
-                    {group.maxMembers - group.members.length} spots remaining
+                    {group.capacity - group.members.length} spots remaining
                   </p>
                 </div>
               </CardContent>

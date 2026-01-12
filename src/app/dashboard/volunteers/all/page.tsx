@@ -19,8 +19,8 @@ import {
 
 interface Volunteer {
   id: string;
-  status: string;
-  availableDays: string[];
+  isActive: boolean;
+  skills: string[];
   notes: string | null;
   member: {
     id: string;
@@ -28,13 +28,13 @@ interface Volunteer {
     lastName: string;
     email: string;
     phone: string | null;
-    profileImage: string | null;
+    photo: string | null;
   };
-  roles: {
+  shifts: {
     role: {
       id: string;
       name: string;
-      department: string;
+      ministry: string | null;
     };
   }[];
 }
@@ -75,25 +75,16 @@ export default function AllVolunteersPage() {
     return (
       fullName.includes(searchLower) ||
       volunteer.member.email.toLowerCase().includes(searchLower) ||
-      volunteer.roles.some((r) =>
-        r.role.name.toLowerCase().includes(searchLower)
+      volunteer.shifts.some((s) =>
+        s.role.name.toLowerCase().includes(searchLower)
       )
     );
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "ACTIVE":
-        return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
-      case "PENDING":
-        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
-      case "INACTIVE":
-        return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
-      case "ON_LEAVE":
-        return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
+  const getStatusColor = (isActive: boolean) => {
+    return isActive
+      ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+      : "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
   };
 
   return (
@@ -159,10 +150,10 @@ export default function AllVolunteersPage() {
         </div>
         <div className="flex gap-4 text-sm">
           <span className="text-green-600">
-            {volunteers.filter((v) => v.status === "ACTIVE").length} Active
+            {volunteers.filter((v) => v.isActive).length} Active
           </span>
-          <span className="text-yellow-600">
-            {volunteers.filter((v) => v.status === "PENDING").length} Pending
+          <span className="text-gray-600">
+            {volunteers.filter((v) => !v.isActive).length} Inactive
           </span>
         </div>
       </div>
@@ -189,9 +180,9 @@ export default function AllVolunteersPage() {
                       </h3>
                       <Badge
                         variant="outline"
-                        className={getStatusColor(volunteer.status)}
+                        className={getStatusColor(volunteer.isActive)}
                       >
-                        {volunteer.status.replace("_", " ")}
+                        {volunteer.isActive ? "Active" : "Inactive"}
                       </Badge>
                     </div>
 
@@ -208,25 +199,25 @@ export default function AllVolunteersPage() {
                       )}
                     </div>
 
-                    {volunteer.roles.length > 0 && (
+                    {volunteer.shifts.length > 0 && (
                       <div className="mt-3 flex flex-wrap gap-1">
-                        {volunteer.roles.slice(0, 2).map((vr) => (
-                          <Badge key={vr.role.id} variant="secondary" className="text-xs">
-                            {vr.role.name}
+                        {Array.from(new Map(volunteer.shifts.map((s) => [s.role.id, s.role])).values()).slice(0, 2).map((role) => (
+                          <Badge key={role.id} variant="secondary" className="text-xs">
+                            {role.name}
                           </Badge>
                         ))}
-                        {volunteer.roles.length > 2 && (
+                        {new Set(volunteer.shifts.map((s) => s.role.id)).size > 2 && (
                           <Badge variant="outline" className="text-xs">
-                            +{volunteer.roles.length - 2} more
+                            +{new Set(volunteer.shifts.map((s) => s.role.id)).size - 2} more
                           </Badge>
                         )}
                       </div>
                     )}
 
-                    {volunteer.availableDays.length > 0 && (
+                    {volunteer.skills.length > 0 && (
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
-                        <span>{volunteer.availableDays.join(", ")}</span>
+                        <span>{volunteer.skills.slice(0, 3).join(", ")}</span>
                       </div>
                     )}
                   </div>

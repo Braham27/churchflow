@@ -25,21 +25,21 @@ async function getFinancialData(churchId: string) {
 
   // This month's donations
   const thisMonthDonations = await prisma.donation.aggregate({
-    where: { churchId, date: { gte: startOfMonth } },
+    where: { churchId, donatedAt: { gte: startOfMonth } },
     _sum: { amount: true },
     _count: true,
   });
 
   // Last month's donations
   const lastMonthDonations = await prisma.donation.aggregate({
-    where: { churchId, date: { gte: lastMonth, lt: startOfMonth } },
+    where: { churchId, donatedAt: { gte: lastMonth, lt: startOfMonth } },
     _sum: { amount: true },
     _count: true,
   });
 
   // Year to date
   const ytdDonations = await prisma.donation.aggregate({
-    where: { churchId, date: { gte: startOfYear } },
+    where: { churchId, donatedAt: { gte: startOfYear } },
     _sum: { amount: true },
     _count: true,
   });
@@ -47,7 +47,7 @@ async function getFinancialData(churchId: string) {
   // Donations by fund
   const donationsByFund = await prisma.donation.groupBy({
     by: ["fundId"],
-    where: { churchId, date: { gte: startOfYear } },
+    where: { churchId, donatedAt: { gte: startOfYear } },
     _sum: { amount: true },
     _count: true,
   });
@@ -55,15 +55,15 @@ async function getFinancialData(churchId: string) {
   // Get fund details
   const funds = await prisma.donationFund.findMany({
     where: { churchId },
-    select: { id: true, name: true, color: true, goalAmount: true },
+    select: { id: true, name: true, goal: true },
   });
 
   const fundMap = new Map(funds.map((f) => [f.id, f]));
 
   // Donations by method
   const donationsByMethod = await prisma.donation.groupBy({
-    by: ["method"],
-    where: { churchId, date: { gte: startOfYear } },
+    by: ["paymentMethod"],
+    where: { churchId, donatedAt: { gte: startOfYear } },
     _sum: { amount: true },
     _count: true,
   });
@@ -71,7 +71,7 @@ async function getFinancialData(churchId: string) {
   // Top donors
   const topDonors = await prisma.donation.groupBy({
     by: ["memberId"],
-    where: { churchId, date: { gte: startOfYear }, memberId: { not: null } },
+    where: { churchId, donatedAt: { gte: startOfYear }, memberId: { not: null } },
     _sum: { amount: true },
     orderBy: { _sum: { amount: "desc" } },
     take: 10,
@@ -96,7 +96,7 @@ async function getFinancialData(churchId: string) {
     const monthData = await prisma.donation.aggregate({
       where: {
         churchId,
-        date: { gte: monthStart, lte: monthEnd },
+        donatedAt: { gte: monthStart, lte: monthEnd },
       },
       _sum: { amount: true },
     });
@@ -166,9 +166,9 @@ export default async function FinancialReportPage() {
   const methodLabels: Record<string, string> = {
     CASH: "Cash",
     CHECK: "Check",
-    ONLINE: "Online",
     CARD: "Card",
-    ACH: "ACH",
+    BANK_TRANSFER: "Bank Transfer",
+    ONLINE: "Online",
     OTHER: "Other",
   };
 
@@ -318,12 +318,9 @@ export default async function FinancialReportPage() {
                   <div key={item.fund?.id || "unknown"}>
                     <div className="flex justify-between text-sm mb-1">
                       <div className="flex items-center gap-2">
-                        {item.fund?.color && (
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: item.fund.color }}
-                          />
-                        )}
+                        <div
+                          className="w-3 h-3 rounded-full bg-primary"
+                        />
                         <span>{item.fund?.name || "Unassigned"}</span>
                       </div>
                       <span>
@@ -332,10 +329,9 @@ export default async function FinancialReportPage() {
                     </div>
                     <div className="w-full bg-muted rounded-full h-2">
                       <div
-                        className="h-2 rounded-full transition-all"
+                        className="h-2 rounded-full transition-all bg-primary"
                         style={{
                           width: `${percentage}%`,
-                          backgroundColor: item.fund?.color || "#3b82f6",
                         }}
                       />
                     </div>
@@ -359,9 +355,9 @@ export default async function FinancialReportPage() {
                     ? ((item._sum.amount || 0) / data.ytd.amount) * 100
                     : 0;
                 return (
-                  <div key={item.method}>
+                  <div key={item.paymentMethod}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>{methodLabels[item.method] || item.method}</span>
+                      <span>{methodLabels[item.paymentMethod] || item.paymentMethod}</span>
                       <span>
                         ${(item._sum.amount || 0).toLocaleString()} (
                         {percentage.toFixed(0)}%)

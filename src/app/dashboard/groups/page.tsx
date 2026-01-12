@@ -20,7 +20,6 @@ async function getGroupStats(churchId: string) {
     prisma.group.findMany({
       where: { churchId },
       include: {
-        leader: { select: { firstName: true, lastName: true } },
         _count: { select: { members: true } },
       },
       orderBy: { name: "asc" },
@@ -30,16 +29,30 @@ async function getGroupStats(churchId: string) {
     }),
   ]);
 
-  const groupsByCategory = groups.reduce((acc, group) => {
+  // Get leader info for each group
+  const groupsWithLeaders = await Promise.all(
+    groups.map(async (group) => {
+      let leader = null;
+      if (group.leaderId) {
+        leader = await prisma.member.findUnique({
+          where: { id: group.leaderId },
+          select: { firstName: true, lastName: true },
+        });
+      }
+      return { ...group, leader };
+    })
+  );
+
+  const groupsByCategory = groupsWithLeaders.reduce((acc, group) => {
     const category = group.category || "Other";
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(group);
     return acc;
-  }, {} as Record<string, typeof groups>);
+  }, {} as Record<string, typeof groupsWithLeaders>);
 
-  return { groups, totalMembers, groupsByCategory };
+  return { groups: groupsWithLeaders, totalMembers, groupsByCategory };
 }
 
 async function getChurchData(userId: string) {
@@ -202,10 +215,10 @@ export default async function GroupsPage() {
                       )}
                     </div>
 
-                    {group.meetingSchedule && (
+                    {group.meetingDay && (
                       <div className="flex items-center gap-1 text-xs text-muted-foreground mt-2">
                         <Calendar className="h-3 w-3" />
-                        <span>{group.meetingSchedule}</span>
+                        <span>{group.meetingDay}{group.meetingTime && ` at ${group.meetingTime}`}</span>
                       </div>
                     )}
                   </CardContent>

@@ -23,14 +23,14 @@ async function getMembershipData(churchId: string) {
 
   // Get member counts by status
   const membersByStatus = await prisma.member.groupBy({
-    by: ["status"],
+    by: ["membershipStatus"],
     where: { churchId },
     _count: true,
   });
 
-  // Get member counts by type
-  const membersByType = await prisma.member.groupBy({
-    by: ["memberType"],
+  // Get member counts by gender
+  const membersByGender = await prisma.member.groupBy({
+    by: ["gender"],
     where: { churchId },
     _count: true,
   });
@@ -55,10 +55,10 @@ async function getMembershipData(churchId: string) {
     where: { churchId, createdAt: { lt: lastYear } },
   });
 
-  // Age distribution (if birthDate is available)
+  // Age distribution (if dateOfBirth is available)
   const membersWithBirthDate = await prisma.member.findMany({
-    where: { churchId, birthDate: { not: null } },
-    select: { birthDate: true },
+    where: { churchId, dateOfBirth: { not: null } },
+    select: { dateOfBirth: true },
   });
 
   const ageGroups = {
@@ -72,9 +72,9 @@ async function getMembershipData(churchId: string) {
   };
 
   membersWithBirthDate.forEach((m) => {
-    if (!m.birthDate) return;
+    if (!m.dateOfBirth) return;
     const age = Math.floor(
-      (Date.now() - new Date(m.birthDate).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
+      (Date.now() - new Date(m.dateOfBirth).getTime()) / (365.25 * 24 * 60 * 60 * 1000)
     );
     if (age <= 12) ageGroups["0-12"]++;
     else if (age <= 17) ageGroups["13-17"]++;
@@ -87,7 +87,7 @@ async function getMembershipData(churchId: string) {
 
   return {
     membersByStatus,
-    membersByType,
+    membersByGender,
     newMembersThisYear,
     newMembersThisMonth,
     totalMembers,
@@ -126,15 +126,9 @@ export default async function MembershipReportPage() {
     ACTIVE: "Active",
     INACTIVE: "Inactive",
     VISITOR: "Visitor",
-    DECEASED: "Deceased",
-  };
-
-  const typeLabels: Record<string, string> = {
     MEMBER: "Member",
-    VISITOR: "Visitor",
     REGULAR_ATTENDER: "Regular Attender",
-    CHILD: "Child",
-    STAFF: "Staff",
+    DECEASED: "Deceased",
   };
 
   return (
@@ -229,9 +223,9 @@ export default async function MembershipReportPage() {
                   ? (item._count / data.totalMembers) * 100
                   : 0;
                 return (
-                  <div key={item.status}>
+                  <div key={item.membershipStatus}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span>{statusLabels[item.status] || item.status}</span>
+                      <span>{statusLabels[item.membershipStatus] || item.membershipStatus}</span>
                       <span>
                         {item._count} ({percentage.toFixed(0)}%)
                       </span>
@@ -249,22 +243,22 @@ export default async function MembershipReportPage() {
           </CardContent>
         </Card>
 
-        {/* By Type */}
+        {/* By Gender */}
         <Card>
           <CardHeader>
-            <CardTitle>Members by Type</CardTitle>
+            <CardTitle>Members by Gender</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {data.membersByType.map((item) => {
+              {data.membersByGender.map((item) => {
                 const percentage = data.totalMembers
                   ? (item._count / data.totalMembers) * 100
                   : 0;
                 return (
-                  <div key={item.memberType}>
+                  <div key={item.gender || "unknown"}>
                     <div className="flex justify-between text-sm mb-1">
                       <span>
-                        {typeLabels[item.memberType] || item.memberType}
+                        {item.gender || "Not Specified"}
                       </span>
                       <span>
                         {item._count} ({percentage.toFixed(0)}%)

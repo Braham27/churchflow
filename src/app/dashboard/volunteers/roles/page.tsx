@@ -21,10 +21,10 @@ async function getRoles(churchId: string) {
     where: { churchId },
     include: {
       _count: {
-        select: { volunteers: true },
+        select: { shifts: true },
       },
     },
-    orderBy: [{ department: "asc" }, { name: "asc" }],
+    orderBy: [{ ministry: "asc" }, { name: "asc" }],
   });
 }
 
@@ -50,18 +50,18 @@ export default async function VolunteerRolesPage() {
 
   const roles = await getRoles(churchData.churchId);
 
-  // Group roles by department
-  const rolesByDepartment = roles.reduce(
+  // Group roles by ministry
+  const rolesByMinistry = roles.reduce(
     (acc, role) => {
-      const dept = role.department || "General";
-      if (!acc[dept]) acc[dept] = [];
-      acc[dept].push(role);
+      const ministry = role.ministry || "General";
+      if (!acc[ministry]) acc[ministry] = [];
+      acc[ministry].push(role);
       return acc;
     },
     {} as Record<string, typeof roles>
   );
 
-  const departments = Object.keys(rolesByDepartment).sort();
+  const ministries = Object.keys(rolesByMinistry).sort();
 
   return (
     <div className="space-y-6">
@@ -108,8 +108,8 @@ export default async function VolunteerRolesPage() {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Departments</p>
-              <p className="text-2xl font-bold">{departments.length}</p>
+              <p className="text-sm text-muted-foreground">Ministries</p>
+              <p className="text-2xl font-bold">{ministries.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -120,29 +120,29 @@ export default async function VolunteerRolesPage() {
               <Users className="h-6 w-6" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Filled Positions</p>
+              <p className="text-sm text-muted-foreground">Total Shifts</p>
               <p className="text-2xl font-bold">
-                {roles.reduce((sum, r) => sum + r._count.volunteers, 0)}
+                {roles.reduce((sum, r) => sum + r._count.shifts, 0)}
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Roles by Department */}
-      {departments.length > 0 ? (
+      {/* Roles by Ministry */}
+      {ministries.length > 0 ? (
         <div className="space-y-6">
-          {departments.map((department) => (
-            <Card key={department}>
+          {ministries.map((ministry) => (
+            <Card key={ministry}>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Briefcase className="h-5 w-5" />
-                  {department}
+                  {ministry}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="divide-y">
-                  {rolesByDepartment[department].map((role) => (
+                  {rolesByMinistry[ministry].map((role) => (
                     <div
                       key={role.id}
                       className="flex items-center justify-between py-4 first:pt-0 last:pb-0"
@@ -159,11 +159,6 @@ export default async function VolunteerRolesPage() {
                                 Background Check
                               </Badge>
                             )}
-                            {role.requiresTraining && (
-                              <Badge variant="outline" className="text-xs">
-                                Training Required
-                              </Badge>
-                            )}
                           </div>
                           {role.description && (
                             <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
@@ -173,15 +168,9 @@ export default async function VolunteerRolesPage() {
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <Users className="h-3 w-3" />
-                              {role._count.volunteers} volunteer
-                              {role._count.volunteers !== 1 ? "s" : ""}
+                              {role._count.shifts} shift
+                              {role._count.shifts !== 1 ? "s" : ""}
                             </span>
-                            {role.minVolunteers && (
-                              <span className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
-                                Min: {role.minVolunteers}
-                              </span>
-                            )}
                           </div>
                         </div>
                       </div>

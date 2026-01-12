@@ -24,10 +24,9 @@ interface Member {
   lastName: string;
   email: string;
   phone: string | null;
-  status: string;
-  membershipType: string;
-  joinDate: string | null;
-  profileImage: string | null;
+  membershipStatus: string;
+  membershipDate: string | null;
+  photo: string | null;
 }
 
 export default function AllMembersPage() {
@@ -177,7 +176,6 @@ export default function AllMembersPage() {
                     <th className="text-left py-3 px-4 font-medium">Name</th>
                     <th className="text-left py-3 px-4 font-medium">Contact</th>
                     <th className="text-left py-3 px-4 font-medium">Status</th>
-                    <th className="text-left py-3 px-4 font-medium">Type</th>
                     <th className="text-left py-3 px-4 font-medium">Joined</th>
                     <th className="text-right py-3 px-4 font-medium">Actions</th>
                   </tr>
@@ -209,20 +207,15 @@ export default function AllMembersPage() {
                       <td className="py-3 px-4">
                         <Badge
                           variant="outline"
-                          className={getStatusColor(member.status)}
+                          className={getStatusColor(member.membershipStatus)}
                         >
-                          {member.status}
+                          {member.membershipStatus}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm">
-                          {member.membershipType.replace("_", " ")}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
                         <span className="text-sm text-muted-foreground">
-                          {member.joinDate
-                            ? new Date(member.joinDate).toLocaleDateString()
+                          {member.membershipDate
+                            ? new Date(member.membershipDate).toLocaleDateString()
                             : "-"}
                         </span>
                       </td>

@@ -220,29 +220,29 @@ export default async function ActivityLogPage() {
 
                             {details && (
                               <p className="text-sm text-muted-foreground mt-1">
-                                {details.memberName && (
-                                  <span>{details.memberName as string}</span>
-                                )}
-                                {details.eventName && (
-                                  <span>{details.eventName as string}</span>
-                                )}
-                                {details.groupName && (
-                                  <span>{details.groupName as string}</span>
-                                )}
-                                {details.subject && (
-                                  <span>{details.subject as string}</span>
-                                )}
-                                {details.amount && (
+                                {details.memberName ? (
+                                  <span>{String(details.memberName)}</span>
+                                ) : null}
+                                {details.eventName ? (
+                                  <span>{String(details.eventName)}</span>
+                                ) : null}
+                                {details.groupName ? (
+                                  <span>{String(details.groupName)}</span>
+                                ) : null}
+                                {details.subject ? (
+                                  <span>{String(details.subject)}</span>
+                                ) : null}
+                                {typeof details.amount === "number" ? (
                                   <span>
-                                    ${(details.amount as number).toLocaleString()}
+                                    ${details.amount.toLocaleString()}
                                   </span>
-                                )}
-                                {details.updatedFields && (
+                                ) : null}
+                                {Array.isArray(details.updatedFields) ? (
                                   <span>
                                     Updated:{" "}
-                                    {(details.updatedFields as string[]).join(", ")}
+                                    {details.updatedFields.join(", ")}
                                   </span>
-                                )}
+                                ) : null}
                               </p>
                             )}
 

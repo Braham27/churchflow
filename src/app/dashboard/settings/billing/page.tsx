@@ -114,7 +114,7 @@ export default async function BillingPage() {
   const currentPlan = plans.find(
     (p) => p.tier === churchData.church.subscriptionTier
   );
-  const isTrialing = churchData.church.subscriptionStatus === "TRIALING";
+  const isTrialing = churchData.church.subscriptionStatus === "TRIAL";
   const trialDaysLeft = churchData.church.trialEndsAt
     ? Math.max(
         0,

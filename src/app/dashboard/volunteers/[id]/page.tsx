@@ -34,12 +34,7 @@ async function getVolunteer(id: string, churchId: string) {
           lastName: true,
           email: true,
           phone: true,
-          profileImage: true,
-        },
-      },
-      roles: {
-        include: {
-          role: true,
+          photo: true,
         },
       },
       shifts: {
@@ -49,6 +44,12 @@ async function getVolunteer(id: string, churchId: string) {
               id: true,
               title: true,
               startDate: true,
+            },
+          },
+          role: {
+            select: {
+              id: true,
+              name: true,
             },
           },
         },
@@ -108,11 +109,10 @@ export default async function VolunteerDetailPage({
     notFound();
   }
 
-  const statusColors: Record<string, string> = {
-    ACTIVE: "bg-green-100 text-green-800",
-    INACTIVE: "bg-gray-100 text-gray-800",
-    ON_LEAVE: "bg-yellow-100 text-yellow-800",
-    PENDING: "bg-blue-100 text-blue-800",
+  const getStatusColor = (isActive: boolean) => {
+    return isActive
+      ? "bg-green-100 text-green-800"
+      : "bg-gray-100 text-gray-800";
   };
 
   const totalHours = volunteer.shifts.reduce((acc, shift) => {
@@ -145,8 +145,8 @@ export default async function VolunteerDetailPage({
                 {volunteer.member?.firstName} {volunteer.member?.lastName}
               </h1>
               <div className="flex items-center gap-2 mt-1">
-                <Badge className={statusColors[volunteer.status]}>
-                  {volunteer.status.replace("_", " ")}
+                <Badge className={getStatusColor(volunteer.isActive)}>
+                  {volunteer.isActive ? "Active" : "Inactive"}
                 </Badge>
                 {volunteer.backgroundCheck && (
                   <Badge variant="outline" className="text-green-600 border-green-600">
@@ -214,25 +214,28 @@ export default async function VolunteerDetailPage({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {volunteer.roles.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {volunteer.roles.map((vr) => (
-                    <Badge
-                      key={vr.role.id}
-                      variant="secondary"
-                      className="text-sm py-1 px-3"
-                      style={{
-                        backgroundColor: `${vr.role.color || "#3b82f6"}20`,
-                        color: vr.role.color || "#3b82f6",
-                      }}
-                    >
-                      {vr.role.name}
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-muted-foreground">No roles assigned yet</p>
-              )}
+              {(() => {
+                const uniqueRoles = Array.from(
+                  new Map(
+                    volunteer.shifts.map((s) => [s.role.id, s.role])
+                  ).values()
+                );
+                return uniqueRoles.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {uniqueRoles.map((role) => (
+                      <Badge
+                        key={role.id}
+                        variant="secondary"
+                        className="text-sm py-1 px-3"
+                      >
+                        {role.name}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-muted-foreground">No roles assigned yet</p>
+                );
+              })()}
               <Link href="/dashboard/volunteers/roles">
                 <Button variant="outline" size="sm" className="mt-4">
                   Manage Roles
@@ -337,7 +340,7 @@ export default async function VolunteerDetailPage({
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Roles</span>
-                <span className="font-bold">{volunteer.roles.length}</span>
+                <span className="font-bold">{new Set(volunteer.shifts.map((s) => s.role.id)).size}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-muted-foreground">Joined</span>

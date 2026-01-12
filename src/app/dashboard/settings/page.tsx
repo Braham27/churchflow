@@ -101,11 +101,11 @@ export default async function SettingsPage() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="denomination">Denomination</Label>
+                  <Label htmlFor="description">Description</Label>
                   <Input
-                    id="denomination"
-                    defaultValue={church.denomination || ""}
-                    placeholder="Denomination"
+                    id="description"
+                    defaultValue={church.description || ""}
+                    placeholder="Short description"
                   />
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -180,11 +180,11 @@ export default async function SettingsPage() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="zipCode">ZIP Code</Label>
+                    <Label htmlFor="postalCode">Postal Code</Label>
                     <Input
-                      id="zipCode"
-                      defaultValue={church.zipCode || ""}
-                      placeholder="ZIP"
+                      id="postalCode"
+                      defaultValue={church.postalCode || ""}
+                      placeholder="ZIP/Postal Code"
                     />
                   </div>
                 </div>

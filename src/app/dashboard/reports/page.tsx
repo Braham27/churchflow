@@ -39,7 +39,6 @@ async function getReportStats(churchId: string) {
       where: {
         churchId,
         date: { gte: weekStart, lt: weekEnd },
-        status: "PRESENT",
       },
     });
 
@@ -112,7 +111,6 @@ async function getReportStats(churchId: string) {
       where: {
         churchId,
         date: { gte: thirtyDaysAgo },
-        status: "PRESENT",
       },
     }),
     prisma.checkIn.count({
@@ -122,7 +120,7 @@ async function getReportStats(churchId: string) {
       },
     }),
     prisma.volunteer.count({
-      where: { churchId, status: "ACTIVE" },
+      where: { churchId, isActive: true },
     }),
     prisma.event.count({
       where: {
